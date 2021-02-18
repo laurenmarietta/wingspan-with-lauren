@@ -9,9 +9,10 @@
 
 library(shiny)
 library(tidyverse)
-library(googlesheets4)
 library(showtext)
 library(plotly)
+library(readxl)
+library(httr)
 
 theme_set(theme_minimal())
 
@@ -35,10 +36,14 @@ modeBarButtonsToRemove <- c("zoomIn2d", "zoomOut2d", "zoom2d", "pan2d",
 # Define server logic required to draw a histogram
 shinyServer(function(input, output) {
     
-    gs_url <- "https:\\docs.google.com/spreadsheets/d/1Ryei71k-te0LNubhoaB_HcQ1mWMH86r-bEghjvOmoNk/edit?usp=sharing"
-    wingspan_df <- read_sheet(gs_url)
-
-    data_df <- wingspan_df %>%
+    # Define file locations
+    googledrive_url <- "https://docs.google.com/spreadsheets/d/1Ryei71k-te0LNubhoaB_HcQ1mWMH86r-bEghjvOmoNk/export"
+    
+    # Download excel spreadsheet from URL and read as DF
+    GET(googledrive_url, 
+        write_disk(tf <- tempfile(fileext = ".xlsx")))
+    
+    data_df <- read_excel(tf) %>%
         select(-`Date?`) %>%
         mutate(game_id = row_number()) %>%
         pivot_longer(-game_id, names_to="player", values_to="scores", values_drop_na=T) %>%
