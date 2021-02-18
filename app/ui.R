@@ -38,7 +38,7 @@ shinyUI(fluidPage(theme = "wingspan_with_lauren.css",
       a("Paul Tol's Accessible Color Schemes", href="https://personal.sron.nl/~pault/")),
     p("Source:",
       a("Google Sheets", 
-        href="https:\\docs.google.com/spreadsheets/d/1Ryei71k-te0LNubhoaB_HcQ1mWMH86r-bEghjvOmoNk/edit?usp=sharing")),
+        href="https://docs.google.com/spreadsheets/d/1Ryei71k-te0LNubhoaB_HcQ1mWMH86r-bEghjvOmoNk/edit?usp=sharing")),
     p("Github:",
       a("https://github.com/laurenmarietta/wingspan-with-lauren", 
         href="https://github.com/laurenmarietta/wingspan-with-lauren"))
