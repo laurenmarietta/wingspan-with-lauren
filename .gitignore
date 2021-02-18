@@ -1,0 +1,6 @@
+.httr-oauth
+.Rdata
+.Rhistory
+.Rproj.user/
+*.Rproj
+*.jpg

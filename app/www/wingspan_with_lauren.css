@@ -1,0 +1,78 @@
+/*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Custom CSS for Lauren's Wingspan Shiny App
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Thank you: https://shiny.rstudio.com/articles/css.html
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
+
+/* Define custom fonts */
+
+@font-face {
+  font-family:'bebas';
+  src: url("fonts/BebasNeue-Regular.ttf") format('truetype');
+  font-weight:400;
+}
+
+@font-face {
+  font-family:'cardenio';
+  src: url("fonts/CardenioModern-Bold.otf") format('opentype');
+  font-weight:600;
+}
+
+body {
+  margin-left: 5%;
+  margin-right: 5%;
+  background-image: url("background_watercolor.png");
+  background-attachment: fixed;
+  background-size: cover;
+}
+
+h1 {
+    font-family: bebas;
+    text-align: center;
+    letter-spacing: 1.7rem;
+    font-size: 5em;
+    margin-bottom: 0px;
+    line-height: .8;
+    color: white;
+    text-shadow: 0 2px 9px rgb(0 0 0 / 30%);
+}
+
+h2 {
+  font-family: cardenio;
+  text-align: center;
+  margin-top: 0px;
+}
+
+h3, p {
+  font-family: cardenio;
+}
+
+.nav-pills a{
+  font-family: cardenio;
+  font-size: 1.75rem;
+}
+
+.tabbable {
+  background-color: rgb(255 255 255 / 70%);
+  padding: 1rem;
+  border-radius: 1rem;
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+}
+
+.tab-content {
+  padding: 2rem;
+  width: 100%;
+}
+
+.form-group.shiny-input-container {
+    text-align: center;
+    margin-left: auto;
+    margin-right: auto;
+    font-family: 'cardenio';
+    font-size: 1.75rem;
+    background-color: lightskyblue;
+    padding: 1rem;
+    border-radius: 1rem;
+}

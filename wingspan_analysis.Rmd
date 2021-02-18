@@ -1,0 +1,216 @@
+---
+title: "wingspan_analysis"
+output: html_document
+---
+
+```{r}
+library(tidyverse)
+library(googlesheets4)
+library(plotly)
+library(showtext)
+
+theme_set(theme_minimal())
+
+# Load ggplot-friendly font using show_text
+font_add("bebas", "app/www/BebasNeue-Regular.ttf")
+showtext_auto()
+```
+
+```{r}
+# Authenticate Google Sheets
+gs4_deauth()
+
+gs_url <- "https:\\docs.google.com/spreadsheets/d/1Ryei71k-te0LNubhoaB_HcQ1mWMH86r-bEghjvOmoNk/edit?usp=sharing"
+wingspan_df <- read_sheet(gs_url)
+```
+
+```{r}
+data_df <- wingspan_df %>%
+  select(-`Date?`) %>%
+  mutate(game_id = row_number()) %>%
+  pivot_longer(-game_id, names_to="player", values_to="scores", values_drop_na=T) %>%
+  extract(scores, into=c("Birds", "Bonus Cards", "End-of-Round Goals", "Eggs", "Food on Cards", "Tucked Cards"),
+          regex="(\\d{1,2})B,(\\d{1,2})C,(\\d{1,2})R,(\\d{1,2})E,(\\d{1,2})F,(\\d{1,2})T", remove=T) %>%
+  pivot_longer(c(-game_id, -player), names_to="type", values_to="score") %>%
+  mutate(score = as.numeric(score))
+```
+
+```{r}
+data_df %>%
+  # group_by(type) %>%
+  # summarize(score= mean(score)) %>%
+ggplot(aes(x=score, y=type)) +
+  geom_boxplot()
+```
+
+```{r}
+data_df %>%
+  filter(player == "Lauren") %>%
+ggplot(aes(x=game_id, y=score, color=type)) +
+  # geom_col() +
+  geom_line() +
+  labs(title="Lauren's scores over time")
+```
+```{r}
+data_df %>%
+  group_by(game_id, player) %>%
+  summarize(game_score = sum(score)) %>%
+ggplot(aes(x=game_id, y=game_score, color=player)) +
+  geom_line() +
+  geom_point()
+```
+```{r}
+data_df %>%
+  group_by(player, type) %>%
+  mutate(players_num = row_number()) %>%
+  group_by(players_num, player) %>%
+  summarize(game_score = sum(score)) %>%
+ggplot(aes(x=players_num, y=game_score, color=player)) +
+  geom_line() +
+  geom_point()
+```
+
+```{r}
+data_df %>%
+  group_by(game_id, player) %>%
+  summarize(game_score = sum(score)) %>%
+  group_by(game_id) %>%
+  summarize(rank = min_rank(desc(game_score)), player, game_score) %>%
+ggplot(aes(x=game_id, y=rank, color=player)) +
+  geom_line() +
+  geom_point() +
+  scale_y_reverse()
+```
+```{r}
+data_df %>%
+  group_by(game_id, player) %>%
+  summarize(game_score = sum(score), type) %>%
+  group_by(game_id) %>%
+  summarize(rank = dense_rank(desc(game_score)), player, type) %>%
+  group_by(player, type) %>%
+  mutate(players_num = row_number()) %>%
+ggplot(aes(x=players_num, y=rank, color=player)) +
+  geom_line() +
+  geom_point() +
+  scale_y_reverse()
+```
+
+
+```{r}
+data_df %>%
+  filter(player=="Lauren") %>%
+ggplot(aes(x=game_id, y=score, fill=type)) +
+  geom_col(position = position_dodge()) +
+  scale_x_continuous(breaks=scales::pretty_breaks(n=15)) +
+  theme(legend.position="top")
+```
+
+```{r}
+data_df %>%
+  filter(player=="Kira") %>%
+  group_by(type) %>%
+  mutate(game_id = row_number()) %>%
+ggplot(aes(x=game_id, y=score, fill=type)) +
+  geom_col(position = position_dodge()) +
+  scale_x_continuous(breaks=scales::pretty_breaks(n=5), labels=scales::number_format(accuracy=1)) +
+  theme(legend.position="top")
+```
+
+
+```{r}
+data_df %>%
+  group_by(game_id, player) %>%
+  summarize(game_score = sum(score), type, score) %>%
+  group_by(game_id) %>%
+  summarize(rank = dense_rank(desc(game_score)), game_score, score, type) %>%
+  filter(rank == 1) %>%
+  mutate(percent_score = score / game_score) %>%
+ggplot(aes(x=game_id, y=percent_score, fill=type)) +
+  geom_col(position=position_stack())
+```
+
+
+
+
+```{r}
+data_df %>%
+  group_by(player) %>%
+  filter(length(unique(game_id)) > 1) %>%
+  group_by(game_id, player) %>%
+  summarize(game_score = sum(score), type, score) %>%
+  # group_by(player) #%>%
+  # summarize(tot_game_score = sum(game_score), game_score, type, score) %>%
+  group_by(player, type) %>%
+  summarize(type_score = sum(score)) %>%
+  group_by(player) %>%
+  mutate(tot_game_score = sum(type_score),
+         percent_type = type_score / tot_game_score) %>%
+  ggplot(aes(x=player, y=percent_type, fill=type)) +
+  geom_col(position = position_stack())
+```
+
+# Formal formatting
+```{r}
+label_lightback <- list(
+  bordercolor = "transparent",
+  font = list(
+    family = "cardenio",
+    size = 15
+  )
+)
+
+g <- data_df %>%
+  group_by(game_id, player) %>%
+  summarize(game_score = sum(score)) %>%
+  rename(`Game #`=game_id, Score=game_score, Player=player) %>%
+  group_by(Player) %>%
+  summarize(n_games = n(), `Game #`, Score) %>%
+  ungroup() %>%
+  arrange(desc(n_games)) %>%
+  mutate(Player = factor(Player, unique(Player))) %>%
+ggplot(aes(x=`Game #`, y=Score, color=Player, linetype=Player, shape=Player)) +
+  geom_line(size=1, alpha=.8) +
+  geom_point(size=2.5, alpha=.8) +
+  theme(text=element_text(family="cardenio", size=15),
+        title=element_text(size=18)) +
+  scale_color_manual(values=rep(c('#CC6677', '#332288', '#DDCC77', '#117733', '#88CCEE',
+                    '#882255', '#44AA99', '#999933', '#AA4499'), 2)) +
+  scale_linetype_manual(values=c(rep("solid", 9), rep("11", 9))) + 
+  scale_shape_manual(values=c(rep(16, 9), rep(15, 9)))
+
+g
+
+light_cb_palette = c('#77AADD', '#EE8866', '#EEDD88', '#FFAABB', '#99DDFF', '#44BB99', '#BBCC33', '#AAAA00')
+
+modeBarButtonsToRemove <- c("zoomIn2d", "zoomOut2d", "zoom2d", "pan2d", 
+                            "select2d", "lasso2d", "autoScale2d",
+                            "hoverClosestCartesian",
+                            "hoverCompareCartesian", "toggleSpikelines")
+  
+ggplotly(g, tooltip=c("x", "y", "shape"),
+                dynamicTicks = T) %>%
+  style(hoverlabel = label_lightback) %>% 
+  layout(legend = list(orientation = 'h', x = .5, y = -.2, 
+                       yanchor="top", xanchor="center"),
+         xaxis = list(title = list(standoff=20))) %>%
+  plotly::config(modeBarButtonsToRemove = modeBarButtonsToRemove)
+
+```
+
+```{r}
+g <- data_df %>%
+  rename(Score=score) %>%
+  ggplot(aes(y=Score, x=type)) +
+      geom_boxplot() +
+  coord_flip() +
+  labs(x="")
+
+ggplotly(g) %>%
+  style(hoverlabel = label_lightback) %>% 
+  layout(legend = list(orientation = 'h', x = .5, y = -.2, 
+                       yanchor="top", xanchor="center"),
+         xaxis = list(title = list(standoff=20))) %>%
+  plotly::config(modeBarButtonsToRemove = modeBarButtonsToRemove)
+```
+
+
