@@ -34,7 +34,7 @@ modeBarButtonsToRemove <- c("zoomIn2d", "zoomOut2d", "zoom2d", "pan2d",
                             "hoverCompareCartesian", "toggleSpikelines")
 
 # Define server logic required to draw a histogram
-shinyServer(function(input, output) {
+shinyServer(function(input, output, session) {
     
     # Define file locations
     googledrive_url <- "https://docs.google.com/spreadsheets/d/1Ryei71k-te0LNubhoaB_HcQ1mWMH86r-bEghjvOmoNk/export"
@@ -51,6 +51,15 @@ shinyServer(function(input, output) {
                 regex="(\\d{1,2})B,(\\d{1,2})C,(\\d{1,2})R,(\\d{1,2})E,(\\d{1,2})F,(\\d{1,2})T", remove=T) %>%
         pivot_longer(c(-game_id, -player), names_to="type", values_to="score") %>%
         mutate(score = as.numeric(score))
+    
+    all_players <- data_df %>%
+        pull(player) %>%
+        unique()
+    
+    observe({
+        updateSelectInput(session, "player_comp_select",
+                          choices = all_players)
+    })
     
     
     output$box_whisker <- renderPlotly({
